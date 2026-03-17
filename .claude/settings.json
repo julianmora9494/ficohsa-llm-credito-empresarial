@@ -1,0 +1,27 @@
+{
+  "projectDescription": "FicoCrédito AI — Asistente LLM para análisis de crédito empresarial. RAG sobre informes de gestión centroamericanos (HN/GT/NI) + análisis de estados financieros. Stack: Azure OpenAI GPT-4o + FAISS + LangChain.",
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import ast, sys; ast.parse(open(sys.argv[1]).read())\" \"${file}\" 2>/dev/null || echo '⚠  Advertencia: archivo Python con error de sintaxis'",
+            "description": "Validar sintaxis Python después de escribir o editar archivos .py"
+          }
+        ]
+      }
+    ]
+  },
+
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(pytest:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

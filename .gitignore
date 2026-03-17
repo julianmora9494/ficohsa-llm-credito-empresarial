@@ -1,0 +1,80 @@
+# ─── Variables de entorno ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ─── Entornos virtuales ────────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Datos y vectorstore ──────────────────────────────────────────────────────
+data/raw/estados_financieros/*.pdf
+data/raw/estados_financieros/*.xlsx
+data/raw/estados_financieros/*.docx
+data/raw/informes_gestion/**/*.pdf
+data/raw/informes_gestion/**/*.pptx
+data/processed/chunks/
+data/processed/evidences/
+data/vectorstore/faiss_index/*.faiss
+data/vectorstore/faiss_index/*.pkl
+
+# Mantener estructura de carpetas vacías
+!data/raw/informes_gestion/honduras/.gitkeep
+!data/raw/informes_gestion/guatemala/.gitkeep
+!data/raw/informes_gestion/nicaragua/.gitkeep
+!data/raw/estados_financieros/.gitkeep
+!data/processed/chunks/.gitkeep
+!data/processed/evidences/.gitkeep
+!data/vectorstore/faiss_index/.gitkeep
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/*.log
+logs/*.log.*
+
+# ─── Tests y coverage ─────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# ─── MLflow / Experimentos ────────────────────────────────────────────────────
+mlruns/
+mlartifacts/
+
+# ─── Archivos temporales ──────────────────────────────────────────────────────
+*.tmp
+*.bak
+staging/

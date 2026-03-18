@@ -12,12 +12,18 @@ Uso:
   python scripts/download_sources.py --fuente sib
   python scripts/download_sources.py --fuente secmca --max-reportes 6
 """
+# -*- coding: utf-8 -*-
 import argparse
+import io
 import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Forzar UTF-8 en stdout para compatibilidad con Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 from dotenv import load_dotenv
 

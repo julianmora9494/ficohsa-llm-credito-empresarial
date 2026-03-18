@@ -42,8 +42,9 @@ def setup_logger(
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # Handler de consola
-    console_handler = logging.StreamHandler(sys.stdout)
+    # Handler de consola — usa stderr para evitar conflictos con Streamlit,
+    # que reemplaza sys.stdout en cada re-ejecucion del script.
+    console_handler = logging.StreamHandler(sys.stderr)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 

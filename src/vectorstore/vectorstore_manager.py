@@ -3,6 +3,7 @@ Gestión de índices FAISS para búsqueda vectorial.
 Mantiene índices separados para documentos sectoriales y estados financieros.
 """
 import json
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -68,13 +69,54 @@ class VectorStoreManager:
 
         logger.info("Indexando %d chunks en %s...", len(chunks), index_name)
 
-        documents = [
-            Document(page_content=chunk.text, metadata=chunk.metadata)
-            for chunk in chunks
-        ]
-
         embeddings = self._embeddings_manager.get_embeddings_for_langchain()
-        store = FAISS.from_documents(documents, embeddings)
+        store: Optional[FAISS] = None
+
+        # Procesar en lotes para respetar el rate limit del tier S0 de Azure OpenAI.
+        # S0 permite ~60 req/min para embeddings; lotes de 50 chunks con pausa entre ellos.
+        BATCH_SIZE = 50
+        BATCH_PAUSE_SECONDS = 12  # pausa entre lotes para evitar 429
+
+        total_batches = (len(chunks) + BATCH_SIZE - 1) // BATCH_SIZE
+        for i in range(0, len(chunks), BATCH_SIZE):
+            batch = chunks[i: i + BATCH_SIZE]
+            batch_num = i // BATCH_SIZE + 1
+            logger.info(
+                "Vectorizando lote %d/%d (%d chunks)...",
+                batch_num, total_batches, len(batch),
+            )
+            documents = [
+                Document(page_content=c.text, metadata=c.metadata) for c in batch
+            ]
+
+            # Reintento con backoff ante rate limit (429)
+            for attempt in range(3):
+                try:
+                    batch_store = FAISS.from_documents(documents, embeddings)
+                    break
+                except Exception as e:
+                    if "429" in str(e) or "RateLimit" in str(e):
+                        wait = 65 * (attempt + 1)
+                        logger.warning(
+                            "Rate limit en lote %d, esperando %ds (intento %d/3)...",
+                            batch_num, wait, attempt + 1,
+                        )
+                        time.sleep(wait)
+                    else:
+                        raise
+
+            if store is None:
+                store = batch_store
+            else:
+                store.merge_from(batch_store)
+
+            # Pausa entre lotes (excepto el ultimo)
+            if i + BATCH_SIZE < len(chunks):
+                time.sleep(BATCH_PAUSE_SECONDS)
+
+        if store is None:
+            logger.error("No se generaron vectores para indexar en %s", index_name)
+            return
 
         if index_name == "sector":
             if self._sector_store is not None:
@@ -89,9 +131,9 @@ class VectorStoreManager:
                 self._financial_store = store
             self._save_store(self._financial_store, self.financial_store_path)
         else:
-            raise ValueError(f"Índice desconocido: {index_name}. Usar 'sector' o 'financial'.")
+            raise ValueError(f"Indice desconocido: {index_name}. Usar 'sector' o 'financial'.")
 
-        logger.info("Indexación completada: %d documentos en %s", len(chunks), index_name)
+        logger.info("Indexacion completada: %d documentos en %s", len(chunks), index_name)
 
     def similarity_search(
         self,

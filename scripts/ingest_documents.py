@@ -6,12 +6,19 @@ Uso:
     python scripts/ingest_documents.py --tipo financiero --empresa AgroExportadora
     python scripts/ingest_documents.py --tipo todos
 """
+# -*- coding: utf-8 -*-
 import argparse
+import io
 import sys
 from pathlib import Path
 
-# Asegurar que el directorio raíz esté en el path
+# Asegurar que el directorio raiz este en el path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Forzar UTF-8 en stdout/stderr para compatibilidad con Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 from src.services.credit_service import CreditService
 from src.utils.logger import setup_logger

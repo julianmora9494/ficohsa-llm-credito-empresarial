@@ -174,6 +174,86 @@ Ver `.env.example` para la lista completa.
 Variables críticas:
 - `AZURE_OPENAI_KEY`
 - `AZURE_OPENAI_ENDPOINT`
-- `AZURE_OPENAI_DEPLOYMENT_NAME` (GPT-4o)
-- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` (text-embedding-3-small)
-- `AZURE_OPENAI_API_VERSION`
+- `AZURE_OPENAI_DEPLOYMENT_NAME` (GPT-4o / o-series)
+- `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` (text-embedding-3-large)
+- `AZURE_OPENAI_API_VERSION` (ej: 2024-12-01-preview)
+
+---
+
+## Estado actual del sistema (marzo 2026)
+
+### Interfaz principal
+- **Streamlit** en `app.py` — arranca con `.venv/Scripts/streamlit run app.py`
+- El usuario **sube un PDF/DOCX/TXT** de estados financieros desde la UI
+- El sistema lee el documento, lo chunkea y lo cruza con el `sector_index` (FAISS)
+- Genera un dictamen: APROBAR / APROBAR CON CONDICIONES / RECHAZAR
+
+### Flujo de datos
+```
+[Usuario sube PDF] → document_loader → chunker → CombinedContext (financial_results)
+                                                           +
+[sector_index FAISS] → retriever → reranker → CombinedContext (sector_results)
+                                                           ↓
+                                              decision_engine → dictamen LLM
+```
+
+### Índices FAISS activos
+| Índice | Estado | Documentos | Chunks aprox. |
+|---|---|---|---|
+| `sector_index` | ✅ Actualizado | BCH, CNBS (HN), Banguat, SIB (GT), BCN (NI) | ~2,992 |
+| `financial_index` | ⚠️ Desactualizado | Alutech 2022, AGRICORP 2022-2023 (los 3 PDFs de test ya no están en la carpeta) | ~1,131 (stale) |
+
+> El `financial_index` stale no afecta el flujo de Streamlit (los uploads se procesan directamente).
+> Para limpiarlo: `python scripts/ingest_documents.py --tipo financiero`
+
+### Documentos de prueba manual
+Disponibles en `data/test/` — uno por país — para subir directamente desde la UI de Streamlit:
+- `alutech_calificacion_riesgo_2024_TEST.pdf` (Honduras)
+- `ciudad_comercial_ef_auditados_2023_TEST.pdf` (Guatemala)
+- `agricorp_ef_auditados_2024_TEST.pdf` (Nicaragua)
+
+### Rol del LLM en Streamlit (prompt del sistema)
+El LLM de Azure OpenAI usa el rol de **analista senior de crédito** definido en
+`src/config/prompts/system.py`. Este archivo está **alineado** con `.claude/commands/analista-credito.md`.
+
+El prompt incluye:
+- Las 5C del crédito (Carácter, Capacidad, Capital, Colateral, Condiciones)
+- 5 grupos de indicadores financieros con umbrales (liquidez, cobertura, endeudamiento, rentabilidad, eficiencia)
+- Metodología de análisis en 7 pasos
+- 7 reglas no negociables (ej: no dictar sin ICR + DSCR + Deuda/EBITDA)
+- RED FLAGS y GREEN FLAGS específicas del mercado centroamericano
+- Reglas de grounding estrictas (citar fuente, página, sección)
+
+> Si modificas los umbrales o el marco de análisis en uno de los dos archivos,
+> actualiza el otro también para mantenerlos alineados.
+
+### Slash commands disponibles (para uso en este chat)
+| Comando | Acción |
+|---|---|
+| `/analista-credito` | Activa el modo analista senior — útil para revisar prompts, evaluar dictámenes y mejorar el sistema |
+| `/analizar-empresa` | Corre el script demo con empresa ficticia desde CLI |
+| `/indexar` | Ejecuta la indexación de documentos en FAISS |
+| `/descargar-fuentes` | Descarga PDFs desde BCH, Banguat, BCN, SECMCA |
+
+> **Nota**: Los slash commands son herramientas de desarrollo (para Claude Code en este chat),
+> no funcionalidad de la interfaz Streamlit para el usuario final.
+
+### Cómo actualizar la base de conocimiento
+
+**Agregar nuevo informe de gestión sectorial (más común):**
+```bash
+# 1. Coloca el PDF en data/raw/informes_gestion/[pais]/
+# 2. Re-indexa el sector_index completo:
+python scripts/ingest_documents.py --tipo sector
+```
+
+**Re-indexar financial_index (referencia de empresas):**
+```bash
+# Solo necesario si cambiaste archivos en data/raw/estados_financieros/
+python scripts/ingest_documents.py --tipo financiero
+```
+
+**Todo desde cero:**
+```bash
+python scripts/ingest_documents.py --tipo todos
+```

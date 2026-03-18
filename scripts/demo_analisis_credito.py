@@ -8,10 +8,16 @@ tienen propósito de prueba/demostración. No contienen datos reales de clientes
 Uso:
     python scripts/demo_analisis_credito.py
 """
+# -*- coding: utf-8 -*-
+import io
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 from src.services.credit_service import CreditService
 from src.utils.logger import setup_logger

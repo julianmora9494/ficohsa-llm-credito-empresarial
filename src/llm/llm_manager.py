@@ -40,7 +40,12 @@ class LLMManager:
         return self._client
 
     def _build_client(self) -> AzureChatOpenAI:
-        """Construye e inicializa el cliente Azure OpenAI."""
+        """
+        Construye e inicializa el cliente Azure OpenAI.
+        Compatible con modelos GPT-4o y modelos o-series (razonamiento).
+        Los modelos o-series no aceptan temperature ni top_p personalizados;
+        usan max_completion_tokens en lugar de max_tokens.
+        """
         logger.info(
             "Inicializando cliente Azure OpenAI: deployment=%s, api_version=%s",
             self._settings.azure_openai_deployment_name,
@@ -51,9 +56,7 @@ class LLMManager:
             azure_endpoint=self._settings.azure_openai_endpoint,
             api_key=self._settings.azure_openai_key,
             api_version=self._settings.azure_openai_api_version,
-            temperature=self._settings.llm_temperature,
-            max_tokens=self._settings.llm_max_tokens,
-            top_p=self._settings.llm_top_p,
+            model_kwargs={"max_completion_tokens": self._settings.llm_max_tokens},
         )
 
     def invoke(self, prompt: str) -> str:

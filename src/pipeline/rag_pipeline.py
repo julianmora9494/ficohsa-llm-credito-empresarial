@@ -108,29 +108,54 @@ class CreditRAGPipeline:
     def ingest_estados_financieros(self, company_name: str) -> int:
         """
         Ingesta estados financieros de una empresa específica.
+        Busca recursivamente en data/raw/estados_financieros/ la carpeta
+        cuyo nombre coincida con company_name (ej. 'alutech_sa').
         Los indexa en el índice financiero (financial_index).
 
         Args:
-            company_name: Nombre identificador de la empresa.
+            company_name: Nombre del directorio de la empresa (ej. 'alutech_sa').
 
         Returns:
             Número de chunks indexados.
         """
-        path = self._settings.estados_financieros_path
+        base_path = self._settings.estados_financieros_path
+
+        # Buscar el directorio de la empresa recursivamente (puede estar bajo [pais]/[empresa])
+        company_dir: Optional[Path] = None
+        for candidate in base_path.rglob(company_name):
+            if candidate.is_dir():
+                company_dir = candidate
+                break
+
+        if company_dir is None:
+            # Fallback: buscar por nombre parcial en subdirectorios
+            for candidate in base_path.rglob("*"):
+                if candidate.is_dir() and company_name.lower() in candidate.name.lower():
+                    company_dir = candidate
+                    break
+
+        if company_dir is None:
+            logger.warning(
+                "No se encontro directorio para la empresa '%s' en %s",
+                company_name, base_path,
+            )
+            return 0
+
+        # Determinar el país a partir del directorio padre
+        country = company_dir.parent.name if company_dir.parent != base_path else None
+        logger.info("Cargando documentos de %s desde %s", company_name, company_dir)
 
         documents = self.document_loader.load_directory(
-            directory=path,
+            directory=company_dir,
             source_category=SourceCategory.ESTADO_FINANCIERO,
-            country=None,
+            country=country,
         )
 
-        # Filtrar por empresa si hay múltiples archivos
-        company_docs = [
-            d for d in documents
-            if company_name.lower() in d.file_name.lower()
-        ] or documents  # Si no hay match exacto, usar todos
+        if not documents:
+            logger.warning("No se encontraron documentos para %s en %s", company_name, company_dir)
+            return 0
 
-        chunks = self.chunker.chunk_documents(company_docs)
+        chunks = self.chunker.chunk_documents(documents)
         self.vectorstore_manager.add_chunks(chunks, index_name="financial")
         logger.info("Estados financieros de %s: %d chunks indexados", company_name, len(chunks))
         return len(chunks)
@@ -220,6 +245,105 @@ class CreditRAGPipeline:
             pais=pais,
             anio=anio,
             financial_profile=financial_profile,
+            context=final_context,
+        )
+
+        return result
+
+    def analyze_credit_from_file(
+        self,
+        file_path: Path,
+        empresa: str,
+        sector: str,
+        pais: str,
+        anio: int,
+        country_filter: Optional[str] = None,
+    ) -> CreditAnalysisResult:
+        """
+        Análisis crediticio a partir de un archivo subido directamente.
+        El documento subido se usa como contexto financiero sin pasar por FAISS.
+        El contexto sectorial sigue recuperándose del índice sector_index.
+
+        Args:
+            file_path: Ruta al archivo de estados financieros (PDF, DOCX, XLSX, TXT).
+            empresa: Nombre de la empresa a analizar.
+            sector: Sector económico.
+            pais: País de operación.
+            anio: Año del análisis.
+            country_filter: Filtrar contexto sectorial por país.
+
+        Returns:
+            CreditAnalysisResult con dictamen completo.
+        """
+        logger.info(
+            "Analizando credito desde archivo: %s para empresa=%s, sector=%s",
+            file_path.name, empresa, sector,
+        )
+
+        # Cargar y chunkear el documento subido
+        doc = self.document_loader.load_file(
+            file_path=file_path,
+            source_category=SourceCategory.ESTADO_FINANCIERO,
+            country=country_filter,
+        )
+
+        if doc is None:
+            logger.error("No se pudo cargar el archivo: %s", file_path)
+            from src.retrieval.retriever import CombinedContext, RetrievalResult
+            empty_context = CombinedContext(sector_results=[], financial_results=[], query="")
+            return self.decision_engine.analyze(
+                empresa=empresa, sector=sector, pais=pais, anio=anio,
+                financial_profile=None, context=empty_context,
+            )
+
+        chunks = self.chunker.chunk_documents([doc])
+        logger.info("Documento cargado: %d chunks extraidos de %s", len(chunks), file_path.name)
+
+        # Convertir chunks del documento a RetrievalResult (sin búsqueda vectorial)
+        from src.retrieval.retriever import CombinedContext, RetrievalResult
+        financial_results = [
+            RetrievalResult(
+                chunk_id=f"upload_{i}",
+                text=chunk.text,
+                score=1.0,
+                source_category="estado_financiero",
+                file_name=file_path.name,
+                country=country_filter or pais.lower(),
+                chunk_index=i,
+                metadata=chunk.metadata,
+            )
+            for i, chunk in enumerate(chunks)
+        ]
+
+        # Recuperar contexto sectorial del índice FAISS
+        query = (
+            f"análisis crediticio empresa {sector} {pais} situación financiera "
+            f"riesgo capacidad pago {empresa}"
+        )
+        sector_context = self.retriever.retrieve(
+            query=query,
+            top_k_sector=self._settings.top_k_sector,
+            top_k_financial=0,
+            country_filter=country_filter,
+        )
+
+        # Aplicar reranking solo al contexto sectorial
+        reranked = self.reranker.rerank(sector_context)
+        sector_reranked = [r for r in reranked if r.source_category == "informe_gestion"]
+
+        final_context = CombinedContext(
+            sector_results=sector_reranked or sector_context.sector_results,
+            financial_results=financial_results,
+            query=query,
+        )
+
+        # Generar dictamen sin financial_profile (el LLM extrae cifras del texto)
+        result = self.decision_engine.analyze(
+            empresa=empresa,
+            sector=sector,
+            pais=pais,
+            anio=anio,
+            financial_profile=None,
             context=final_context,
         )
 

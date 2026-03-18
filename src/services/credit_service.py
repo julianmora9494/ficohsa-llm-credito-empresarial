@@ -2,6 +2,8 @@
 Servicio de alto nivel para el análisis de crédito empresarial.
 Interfaz simplificada para uso desde la UI o API.
 """
+import tempfile
+from pathlib import Path
 from typing import Dict, Optional
 
 from src.credit.decision_engine import CreditAnalysisResult, CreditDecision
@@ -102,6 +104,52 @@ class CreditService:
             country_filter=country_filter,
         )
         return self._serialize_result(result)
+
+    def analizar_credito_desde_archivo(
+        self,
+        file_bytes: bytes,
+        file_name: str,
+        empresa: str,
+        sector: str,
+        pais: str,
+        anio: int,
+        country_filter: Optional[str] = None,
+    ) -> Dict:
+        """
+        Analiza el crédito a partir de un archivo de estados financieros subido.
+        El archivo se procesa en memoria sin persistirse en el índice FAISS.
+
+        Args:
+            file_bytes: Contenido binario del archivo subido.
+            file_name: Nombre original del archivo (para determinar el formato).
+            empresa: Nombre de la empresa.
+            sector: Sector económico.
+            pais: País de operación.
+            anio: Año del análisis.
+            country_filter: Filtrar contexto sectorial por país.
+
+        Returns:
+            Dict con el resultado completo del análisis.
+        """
+        suffix = Path(file_name).suffix.lower()
+
+        # Guardar el archivo en un directorio temporal
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(file_bytes)
+            tmp_path = Path(tmp.name)
+
+        try:
+            result = self._pipeline.analyze_credit_from_file(
+                file_path=tmp_path,
+                empresa=empresa,
+                sector=sector,
+                pais=pais,
+                anio=anio,
+                country_filter=country_filter,
+            )
+            return self._serialize_result(result)
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     def consulta_sectorial(
         self, query: str, country_filter: Optional[str] = None

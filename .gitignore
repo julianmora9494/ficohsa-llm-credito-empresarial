@@ -40,17 +40,23 @@ Thumbs.db
 *.ipynb_checkpoints
 
 # ─── Datos y vectorstore ──────────────────────────────────────────────────────
-data/raw/estados_financieros/*.pdf
-data/raw/estados_financieros/*.xlsx
-data/raw/estados_financieros/*.docx
+# Estados financieros de empresas (documentos reales, no se versionan)
+data/raw/estados_financieros/**
 data/raw/informes_gestion/**/*.pdf
 data/raw/informes_gestion/**/*.pptx
+
+# Archivos de prueba (PDFs reales reservados para test manual en UI)
+data/test/
+
+# Chunks y evidencias procesadas
 data/processed/chunks/
 data/processed/evidences/
-data/vectorstore/faiss_index/*.faiss
-data/vectorstore/faiss_index/*.pkl
 
-# Mantener estructura de carpetas vacías
+# Indices FAISS (binarios grandes, se regeneran con ingest_documents.py)
+data/vectorstore/faiss_index/sector_index/
+data/vectorstore/faiss_index/financial_index/
+
+# Mantener estructura de carpetas vacías con .gitkeep
 !data/raw/informes_gestion/honduras/.gitkeep
 !data/raw/informes_gestion/guatemala/.gitkeep
 !data/raw/informes_gestion/nicaragua/.gitkeep

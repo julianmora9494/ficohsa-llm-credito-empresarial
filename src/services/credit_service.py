@@ -151,21 +151,6 @@ class CreditService:
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    def consulta_sectorial(
-        self, query: str, country_filter: Optional[str] = None
-    ) -> str:
-        """
-        Responde una pregunta sobre el contexto sectorial.
-
-        Args:
-            query: Pregunta sobre el sector o economía.
-            country_filter: Filtrar por país específico.
-
-        Returns:
-            Respuesta con contexto sectorial.
-        """
-        return self._pipeline.qa_sectorial(query, country_filter=country_filter)
-
     def _serialize_result(self, result: CreditAnalysisResult) -> Dict:
         """Convierte CreditAnalysisResult a dict serializable."""
         return {

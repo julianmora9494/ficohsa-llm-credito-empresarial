@@ -349,40 +349,6 @@ class CreditRAGPipeline:
 
         return result
 
-    def qa_sectorial(self, query: str, country_filter: Optional[str] = None) -> str:
-        """
-        Responde preguntas sobre el contexto sectorial usando los informes de gestión.
-
-        Args:
-            query: Pregunta sobre el sector o economía.
-            country_filter: Filtrar por país específico.
-
-        Returns:
-            Respuesta generada por el LLM con contexto recuperado.
-        """
-        from src.config.prompts.system import GROUNDING_RULES, SYSTEM_PROMPT_QA_SECTORIAL
-
-        context = self.retriever.retrieve(
-            query=query,
-            top_k_sector=self._settings.top_k_sector,
-            top_k_financial=0,
-            country_filter=country_filter,
-        )
-
-        prompt = f"""{SYSTEM_PROMPT_QA_SECTORIAL}
-
-{GROUNDING_RULES}
-
-## CONSULTA
-{query}
-
-## CONTEXTO RECUPERADO
-{context.format_for_prompt()}
-
-## RESPUESTA
-"""
-        return self._llm_invoke(prompt)
-
     def _llm_invoke(self, prompt: str) -> str:
         """Invoca el LLM con un prompt."""
         return self.llm_manager.invoke(prompt)

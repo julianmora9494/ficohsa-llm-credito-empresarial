@@ -182,8 +182,17 @@ Variables críticas:
 
 ## Estado actual del sistema (marzo 2026)
 
+### Deploy público (POC)
+- **Plataforma**: Streamlit Community Cloud — [share.streamlit.io](https://share.streamlit.io)
+- **URL**: https://ficohsa-llm-credito-empresarial.streamlit.app *(confirmar tras crear la app)*
+- **Branch**: `master` | **Entry point**: `app.py`
+- **Secrets**: configurados en el dashboard de Streamlit Cloud (equivalen a las vars de `.env`)
+- El `sector_index` (21MB) está **incluido en el repo** para que Cloud no necesite re-indexar
+- Cualquier `git push master` dispara un redeploy automático
+
 ### Interfaz principal
-- **Streamlit** en `app.py` — arranca con `.venv/Scripts/streamlit run app.py`
+- **Local**: `.venv/Scripts/streamlit run app.py` → `http://localhost:8501`
+- **Cloud**: URL pública de Streamlit Community Cloud (ver arriba)
 - El usuario **sube un PDF/DOCX/TXT** de estados financieros desde la UI
 - El sistema lee el documento, lo chunkea y lo cruza con el `sector_index` (FAISS)
 - Genera un dictamen: APROBAR / APROBAR CON CONDICIONES / RECHAZAR
@@ -245,11 +254,16 @@ El prompt incluye:
 # 1. Coloca el PDF en data/raw/informes_gestion/[pais]/
 # 2. Re-indexa el sector_index completo:
 python scripts/ingest_documents.py --tipo sector
+# 3. Commitea el índice actualizado para que Streamlit Cloud lo recoja:
+git add data/vectorstore/faiss_index/sector_index/
+git commit -m "chore: actualizar sector_index"
+git push
 ```
 
 **Re-indexar financial_index (referencia de empresas):**
 ```bash
 # Solo necesario si cambiaste archivos en data/raw/estados_financieros/
+# (financial_index NO está en el repo — no hace falta pushearlo)
 python scripts/ingest_documents.py --tipo financiero
 ```
 

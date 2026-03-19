@@ -1,8 +1,17 @@
 # FicoCrédito AI — Asistente LLM de Crédito Empresarial
 
-Asistente de inteligencia artificial para apoyar el análisis de crédito empresarial en **Banco Ficohsa**. Combina información financiera interna de empresas con contexto externo del sector económico centroamericano para generar dictámenes crediticios razonados y trazables.
+Asistente de inteligencia artificial diseñado para apoyar el análisis de crédito empresarial en **Banco Ficohsa**. Integra información proveniente de informes de gestión de Guatemala, Honduras y Nicaragua, con el fin de aportar contexto sobre los distintos sectores de la economía centroamericana y facilitar la generación de dictámenes crediticios fundamentados, razonados y trazables.
 
 > **Nota**: El sistema apoya al oficial de crédito, no reemplaza su criterio. El dictamen es una recomendación, no una decisión autónoma.
+
+---
+
+## Demo en vivo
+
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ficohsa-llm-credito-empresarial.streamlit.app)
+
+> El demo está desplegado en **Streamlit Community Cloud** (POC gratuito).
+> Requiere credenciales de Azure OpenAI configuradas en el servidor — contactar al equipo de Data Science para acceso.
 
 ---
 
@@ -15,6 +24,7 @@ Asistente de inteligencia artificial para apoyar el análisis de crédito empres
 - [Instalación](#instalación)
 - [Configuración](#configuración)
 - [Cómo ejecutar el sistema](#cómo-ejecutar-el-sistema)
+- [Despliegue en Streamlit Community Cloud](#despliegue-en-streamlit-community-cloud)
 - [Tecnologías utilizadas](#tecnologías-utilizadas)
 - [Restricciones importantes](#restricciones-importantes)
 
@@ -504,6 +514,51 @@ data/raw/estados_financieros/
 
 ```bash
 .venv/Scripts/python scripts/ingest_documents.py --tipo todos
+```
+
+---
+
+## Despliegue en Streamlit Community Cloud
+
+La app está configurada para desplegarse en [share.streamlit.io](https://share.streamlit.io) sin infraestructura adicional.
+
+### Archivos de configuración incluidos
+
+| Archivo | Propósito |
+|---|---|
+| `.streamlit/config.toml` | Modo headless, tema Ficohsa, CORS deshabilitado |
+| `runtime.txt` | Fija Python 3.11 en Streamlit Cloud |
+| `data/vectorstore/faiss_index/sector_index/` | Índice sectorial incluido en el repo (21MB) — se carga directamente sin re-indexar |
+
+### Pasos para crear la app en Streamlit Cloud
+
+1. Ir a [share.streamlit.io](https://share.streamlit.io) → **Create app**
+2. Seleccionar el repositorio `ficohsa-llm-credito-empresarial`
+3. Branch: `master` | Main file path: `app.py`
+4. Hacer clic en **Advanced settings** → **Secrets** y agregar:
+
+```toml
+AZURE_OPENAI_KEY = "tu-api-key"
+AZURE_OPENAI_ENDPOINT = "https://tu-recurso.openai.azure.com/"
+AZURE_OPENAI_DEPLOYMENT_NAME = "nombre-deployment-gpt"
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT = "nombre-deployment-embeddings"
+AZURE_OPENAI_API_VERSION = "2024-12-01-preview"
+```
+
+5. Clic en **Deploy** — Streamlit instala dependencias y arranca automáticamente.
+
+> **Importante**: Los secrets del dashboard de Streamlit Cloud se exponen como variables de entorno,
+> que es exactamente lo que lee Pydantic BaseSettings. No se necesita ningún cambio de código.
+
+### Actualizar el deploy
+
+Cualquier `git push` a `master` dispara un redeploy automático en Streamlit Cloud.
+
+Para actualizar el `sector_index` después de re-indexar:
+```bash
+git add data/vectorstore/faiss_index/sector_index/
+git commit -m "chore: actualizar sector_index con nuevos informes"
+git push
 ```
 
 ---

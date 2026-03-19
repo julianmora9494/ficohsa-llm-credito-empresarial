@@ -8,8 +8,8 @@ openai==1.59.6
 faiss-cpu>=1.7.3
 
 # ─── Configuración y variables de entorno ─────────────────────────────────────
-pydantic==2.10.4
-pydantic-settings==2.7.0
+pydantic>=2.10.4
+pydantic-settings>=2.7.0
 python-dotenv==1.0.1
 
 # ─── Procesamiento de documentos ──────────────────────────────────────────────

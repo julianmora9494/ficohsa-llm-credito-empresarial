@@ -52,9 +52,10 @@ data/test/
 data/processed/chunks/
 data/processed/evidences/
 
-# Indices FAISS (binarios grandes, se regeneran con ingest_documents.py)
-data/vectorstore/faiss_index/sector_index/
+# Indices FAISS
+# financial_index: stale, se regenera con: python scripts/ingest_documents.py --tipo financiero
 data/vectorstore/faiss_index/financial_index/
+# sector_index: incluido en el repo (21MB) — necesario para Streamlit Community Cloud
 
 # Mantener estructura de carpetas vacías con .gitkeep
 !data/raw/informes_gestion/honduras/.gitkeep

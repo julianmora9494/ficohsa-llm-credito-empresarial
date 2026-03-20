@@ -72,7 +72,7 @@ def load_service():
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/bank-building.png", width=64)
     st.title("FicoCredito AI")
-    st.caption("Analista de credito empresarial — Banco Ficohsa")
+    st.caption("Analista de credito empresarial")
     st.divider()
 
     # ── Datos de la empresa ──────────────────────────────────────────────────
@@ -123,7 +123,7 @@ with st.sidebar:
 
 # ─── Panel principal ─────────────────────────────────────────────────────────
 st.title("🏦 FicoCredito AI — Analisis de Credito Empresarial")
-st.caption("Sistema de apoyo a decisiones crediticias | Banco Ficohsa | Uso interno")
+st.caption("Sistema de apoyo a decisiones crediticias | Uso interno")
 
 # Cargar servicio
 try:

@@ -1,6 +1,6 @@
-# FicoCrédito AI — Asistente LLM de Crédito Empresarial
+# CréditoAI — Asistente LLM de Crédito Empresarial
 
-Asistente de inteligencia artificial diseñado para apoyar el análisis de crédito empresarial en **Banco Ficohsa**. Integra información proveniente de informes de gestión de Guatemala, Honduras y Nicaragua, con el fin de aportar contexto sobre los distintos sectores de la economía centroamericana y facilitar la generación de dictámenes crediticios fundamentados, razonados y trazables.
+Asistente de inteligencia artificial diseñado para apoyar el análisis de crédito empresarial en entidades bancarias centroamericanas. Integra información proveniente de informes de gestión de Guatemala, Honduras y Nicaragua, con el fin de aportar contexto sobre los distintos sectores de la economía centroamericana y facilitar la generación de dictámenes crediticios fundamentados, razonados y trazables.
 
 > **Nota**: El sistema apoya al oficial de crédito, no reemplaza su criterio. El dictamen es una recomendación, no una decisión autónoma.
 
@@ -8,7 +8,7 @@ Asistente de inteligencia artificial diseñado para apoyar el análisis de créd
 
 ## Demo en vivo
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ficohsa-llm-credito-empresarial.streamlit.app)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://credito-empresarial-llm.streamlit.app)
 
 > El demo está desplegado en **Streamlit Community Cloud** (POC gratuito).
 > Requiere credenciales de Azure OpenAI configuradas en el servidor — contactar al equipo de Data Science para acceso.
@@ -94,7 +94,7 @@ Estados Financieros (Excel/PDF)    Informes de Gestión (PDF)
 ## Estructura de carpetas
 
 ```
-ficohsa-llm-credito-empresarial/
+credito-empresarial-llm/
 │
 ├── data/
 │   ├── raw/
@@ -203,7 +203,7 @@ Documentos públicos de instituciones financieras oficiales centroamericanas. Se
 
 Para demostración y pruebas del sistema se utilizan estados financieros de empresas **reales, legalmente constituidas**, con documentos financieros **públicos y auditados**, obtenidos desde bolsas de valores, reguladores o sitios corporativos oficiales.
 
-Estos archivos son de uso legítimo (documentos públicos) y **no contienen datos de clientes de Ficohsa**. Se organizan en `data/raw/estados_financieros/[pais]/[empresa]/`.
+Estos archivos son de uso legítimo (documentos públicos) y **no contienen datos de clientes reales de ninguna entidad**. Se organizan en `data/raw/estados_financieros/[pais]/[empresa]/`.
 
 ---
 
@@ -295,7 +295,7 @@ data/raw/estados_financieros/
         └── flujo_caja_2023.pdf
 ```
 
-> **Regla crítica**: Los datos financieros reales de clientes de Ficohsa **nunca se commitean al repositorio**. La carpeta `data/raw/estados_financieros/` está en `.gitignore` para entornos de producción. Los archivos de ejemplo del repositorio son únicamente documentos públicos.
+> **Regla crítica**: Los datos financieros reales de clientes **nunca se commitean al repositorio**. La carpeta `data/raw/estados_financieros/` está en `.gitignore` para entornos de producción. Los archivos de ejemplo del repositorio son únicamente documentos públicos.
 
 ---
 
@@ -311,8 +311,8 @@ data/raw/estados_financieros/
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/ficohsa/ficohsa-llm-credito-empresarial.git
-cd ficohsa-llm-credito-empresarial
+git clone https://github.com/julianmora9494/credito-empresarial-llm.git
+cd credito-empresarial-llm
 
 # 2. Crear entorno virtual
 python -m venv .venv
@@ -526,14 +526,14 @@ La app está configurada para desplegarse en [share.streamlit.io](https://share.
 
 | Archivo | Propósito |
 |---|---|
-| `.streamlit/config.toml` | Modo headless, tema Ficohsa, CORS deshabilitado |
+| `.streamlit/config.toml` | Modo headless, tema oscuro, CORS deshabilitado |
 | `runtime.txt` | Fija Python 3.11 en Streamlit Cloud |
 | `data/vectorstore/faiss_index/sector_index/` | Índice sectorial incluido en el repo (21MB) — se carga directamente sin re-indexar |
 
 ### Pasos para crear la app en Streamlit Cloud
 
 1. Ir a [share.streamlit.io](https://share.streamlit.io) → **Create app**
-2. Seleccionar el repositorio `ficohsa-llm-credito-empresarial`
+2. Seleccionar el repositorio `credito-empresarial-llm`
 3. Branch: `master` | Main file path: `app.py`
 4. Hacer clic en **Advanced settings** → **Secrets** y agregar:
 
@@ -584,7 +584,7 @@ git push
 ## Restricciones importantes
 
 1. **Sin datos reales de clientes**: Ningún estado financiero real debe commitearse al repositorio. La carpeta `data/raw/estados_financieros/` está en `.gitignore`.
-2. **Solo Azure OpenAI**: No usar OpenAI directo ni AWS Bedrock. El banco opera sobre infraestructura Azure.
+2. **Solo Azure OpenAI**: No usar OpenAI directo ni AWS Bedrock. El sistema opera sobre infraestructura Azure.
 3. **Trazabilidad obligatoria**: Toda afirmación del dictamen debe citar fuente y sección del documento recuperado.
 4. **Control de alucinaciones**: Si el sistema no tiene datos suficientes para concluir, debe responder "información insuficiente para concluir", no inventar.
 5. **Sin `.env` real en git**: Solo commitear `.env.example` con valores de ejemplo.
@@ -593,6 +593,6 @@ git push
 
 ## Equipo y contexto
 
-**Área responsable**: Data Science & GenAI — Banco Ficohsa
+**Área responsable**: Data Science & GenAI
 **Uso previsto**: Uso interno del área de Riesgo Crediticio y Banca Empresarial
 **Entorno de producción**: Azure (Functions, Blob Storage, AI Search)

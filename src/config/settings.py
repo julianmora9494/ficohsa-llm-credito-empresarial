@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Configuración global del asistente de crédito empresarial Ficohsa."""
+    """Configuración global del asistente de crédito empresarial."""
 
     # ─── Azure OpenAI (LLM) ─────────────────────────────────────────────────
     azure_openai_key: str = Field(..., env="AZURE_OPENAI_KEY")
@@ -36,10 +36,10 @@ class Settings(BaseSettings):
         default=None, env="AZURE_SEARCH_ENDPOINT"
     )
     azure_search_index_sector: str = Field(
-        default="ficohsa-sector-index", env="AZURE_SEARCH_INDEX_SECTOR"
+        default="credito-sector-index", env="AZURE_SEARCH_INDEX_SECTOR"
     )
     azure_search_index_financial: str = Field(
-        default="ficohsa-financial-index", env="AZURE_SEARCH_INDEX_FINANCIAL"
+        default="credito-financial-index", env="AZURE_SEARCH_INDEX_FINANCIAL"
     )
 
     # ─── Configuración LLM ──────────────────────────────────────────────────
@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     )
 
     # ─── Nombre del Asistente ───────────────────────────────────────────────
-    assistant_name: str = Field(default="FicoCrédito AI", env="ASSISTANT_NAME")
+    assistant_name: str = Field(default="CréditoAI", env="ASSISTANT_NAME")
 
     @validator("chunk_overlap")
     def validate_chunk_overlap(cls, v: int, values: dict) -> int:
